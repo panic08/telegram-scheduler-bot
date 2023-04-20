@@ -88,6 +88,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 case "/start" -> {
                     showStart(chatId, update.getMessage().getChat().getFirstName());
+
                     try {
                         ObjectMapper objectMapper = new ObjectMapper();
                         TypeFactory typeFactory = objectMapper.getTypeFactory();
@@ -114,28 +115,52 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             }
 
+        }else{
+            if (update.hasCallbackQuery()){
+                System.out.println("\nU get pump\n");
+                System.out.println(update.getCallbackQuery().getData());
+                sendMessage(update.getCallbackQuery().getData(), update.getCallbackQuery().getMessage().getChatId());
+            }
         }
     }
 
 
     private void showStart(long chatId, String name) {
         String answer = EmojiParser.parseToUnicode(
-                "Hi, " + name + "! :smile:" + " Nice to meet you! I am a Simple Random Joke Bot created by Dmitrijs Finaskins from proj3c.io \n");
+                "Ку, " + name + "! :smile:" + " Как дела\n");
         sendMessage(answer, chatId);
     }
 
     private void commandNotFound(long chatId) {
 
         String answer = EmojiParser.parseToUnicode(
-                "Command not recognized, please verify and try again :stuck_out_tongue_winking_eye: ");
+                "Нету такой команды дебилоид :stuck_out_tongue_winking_eye: ");
         sendMessage(answer, chatId);
 
     }
 
     private void sendMessage(String textToSend, long chatId) {
         SendMessage message = new SendMessage(); // Create a message object object
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
+        inlineKeyboardButton1.setText("Тык");
+        inlineKeyboardButton1.setCallbackData("Button \"Тык\" has been pressed");
+        inlineKeyboardButton2.setText("Тык2");
+        inlineKeyboardButton2.setCallbackData("Button \"Тык2\" has been pressed");
+        List<InlineKeyboardButton> keyboardButtonsRow1 = new ArrayList<>();
+        List<InlineKeyboardButton> keyboardButtonsRow2 = new ArrayList<>();
+        keyboardButtonsRow1.add(inlineKeyboardButton1);
+
+        keyboardButtonsRow2.add(inlineKeyboardButton2);
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        rowList.add(keyboardButtonsRow1);
+        rowList.add(keyboardButtonsRow2);
+        inlineKeyboardMarkup.setKeyboard(rowList);
         message.setChatId(String.valueOf(chatId));
         message.setText(textToSend);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
         try {
             execute(message); // Sending our message object to user
         } catch (TelegramApiException e) {
