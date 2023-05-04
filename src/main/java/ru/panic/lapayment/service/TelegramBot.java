@@ -45,16 +45,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public TelegramBot(BotConfig config) {
         this.config = config;
-//        List<BotCommand> listOfCommands = new ArrayList<>();
-//        listOfCommands.add(new BotCommand("/start", "get a welcome message"));
-//        listOfCommands.add(new BotCommand("/joke", "get a random joke"));
-//        listOfCommands.add(new BotCommand("/help", "info how to use this bot"));
-//        listOfCommands.add(new BotCommand("/settings", "set your preferences"));
-//        try {
-//            this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
-//        } catch (TelegramApiException e) {
-//            log.error(Arrays.toString(e.getStackTrace()));
-//        }
     }
 
     @Override
@@ -70,9 +60,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
-        // We check if the update has a message and the message has text
         if (update.hasMessage() && update.getMessage().hasText()) {
-            // Set variables
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
             if (createStages.get(chatId) != null){
@@ -112,7 +100,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         createStages.get(chatId).setDto(messageText);
 
                         SendMessage sendMessage = new SendMessage();
-                        sendMessage.setText("Придумайте уведомление, которое вы хотите поставить пользователю");
+                        sendMessage.setText("Придумайте уведомление, которое вы хотите напоминать пользователю");
                         sendMessage.setChatId(chatId);
                         sendMessage.setReplyMarkup(inlineKeyboardMarkup);
 
@@ -170,10 +158,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage.setText("Выберите, в какой день будет срабатывать оповещение");
                         sendMessage.setChatId(chatId);
                         sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-//                        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-//                        sendMessage("Вы успешно обновили уведомление пользователя.", chatId);
-                        //жжется
-//                        noticeStages.remove(chatId);
                         try {
                             execute(sendMessage);
                         } catch (TelegramApiException e) {
@@ -181,7 +165,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         }
 
                         Subscriber subscriber = subscriberRepository.findById(Long.valueOf(createStages.get(chatId).getDto())).orElseThrow();
-                        subscriber.setId(subscriber.getId() + 1);
+                        Subscriber subscriber1 = subscriberRepository.findFirstByOrderByIdDesc();
+                        subscriber.setId(subscriber1.getId() + 1);
                         subscriber.setNotice(messageText);
                         subscriberRepository.save(subscriber);
                         createStages.get(chatId).setDto(String.valueOf(subscriber.getId()));
@@ -281,10 +266,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage.setText("Выберите, в какой день будет срабатывать оповещение");
                         sendMessage.setChatId(chatId);
                         sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-//                        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-//                        sendMessage("Вы успешно обновили уведомление пользователя.", chatId);
-                        //жжется
-//                        noticeStages.remove(chatId);
                         try {
                             execute(sendMessage);
                         } catch (TelegramApiException e) {
@@ -300,9 +281,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         return;
                     }
-                    case 2 -> {
 
-                    }
 
                 }
             }
@@ -310,7 +289,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             switch (messageText) {
 
                 case "/start" -> {
-                    sendMessage("Hello, world", chatId);
+                    sendMessage("Приветствую! Я твой персональный бот-напоминатель. " +
+                            "Здесь ты будешь получать уведомления о своих делах на сегодня." +
+                            "Я буду отправлять тебе напоминания о каждом из них в нужное время \uD83E\uDD17", chatId);
                 }
             }
 
@@ -325,20 +306,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } catch (Exception e) {
                     log.error("Query did not return a unique result");
                 }
-//                subscriber.setSubscribedAt(System.currentTimeMillis());
-                subscribeStage(chatId, update.getMessage().getChat().getId().toString());
+                subscribeStage(chatId);
             }
             if (EmojiParser.parseToUnicode(":wavy_dash: Создать уведомление").equals(messageText)) {
                 Stage stage = new Stage();
                 stage.setDto(null);
                 stage.setStage(0);
                 createStages.put(chatId, stage);
-                sendMessage("Введите ID подписчика, которому хотите добавить еще одно уведомление." +
-                        "\nЧтобы его получить, нажмите на кнопку \"Список подписчиков\"", chatId);
+                sendMessage(EmojiParser.parseToUnicode("Введите ID подписчика, которому хотите добавить еще одно уведомление." +
+                        "\nЧтобы его получить, нажмите на кнопку \":mega: Список подписчиков\""), chatId);
             }
             if (EmojiParser.parseToUnicode(":heavy_minus_sign: Отписаться").equals(messageText)) {
                 subscriberService.removeByChatId(chatId);
-//                subscriber.setSubscribedAt(System.currentTimeMillis());
                 describeStage(chatId);
             }
             if (EmojiParser.parseToUnicode(":exclamation: Админ-панель").equals(messageText)){
@@ -367,7 +346,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 SendMessage sendMessage = new SendMessage();
                 sendMessage.setReplyMarkup(inlineKeyboardMarkup);
                 sendMessage.setText(EmojiParser.parseToUnicode("Введите ID подписчика, у которого вы хотите изменить уведомление" +
-                        "\nЧтобы его получить, нажмите на кнопку \"mega: Список подписчиков\""));
+                        "\nЧтобы его получить, нажмите на кнопку \":mega: Список подписчиков\""));
                 sendMessage.setChatId(chatId);
                 Stage stage = new Stage();
                 stage.setStage(0);
@@ -410,9 +389,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                             case "SUNDAY" -> "Воскресенье";
                             case null, default -> "Не указано";
                         };
-                        String a = "ID: " + key.getId() + "\nПодписчик: @" + chatMember.getUser().getUserName() +
+                        String a = "ID: " + key.getId() + "\nПодписчик: " + (chatMember.getUser().getUserName() != null ?
+                               "@" + chatMember.getUser().getUserName() : chatMember.getUser().getFirstName()) +
                                 "\nУведомление: " + (key.getNotice() != null ? key.getNotice() : "Не указано") +
-                                "\nВызыв уведомления: " + dateOfWeekString +
+                                "\nВызов уведомления: " + dateOfWeekString +
                                 "\nПодписался: " + formattedDateTime +
                                 "\n----------------------------------";
                         roller[i] = a;
@@ -433,7 +413,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         createStages.remove(update.getCallbackQuery().getMessage().getChatId());
                     }catch (Exception e){
                     }
-                    sendMessage("ты отменил поздр все круто)", update.getCallbackQuery().getMessage().getChatId());
+                    sendMessage(EmojiParser.parseToUnicode("Вы откатились назад \uD83D\uDE07"), update.getCallbackQuery().getMessage().getChatId());
                     return;
                 }
                 if(update.getCallbackQuery().getData().equals(EmojiParser.parseToUnicode(":calendar: Понедельник")) ||
@@ -482,7 +462,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                         subscriberRepository.save(subscriber);
                     }else{
                         sendMessage("Вы успешно создали новое уведомление для подписчика", update.getCallbackQuery().getMessage().getChatId());
-                        System.out.println(createStages.get(update.getCallbackQuery().getMessage().getChatId()).getDto());
                            Subscriber subscriber = subscriberRepository.findById(Long.valueOf(createStages.get(update.getCallbackQuery().getMessage().getChatId()).getDto())).orElseThrow();
                             System.out.println(subscriber.getChatId());
 
@@ -491,15 +470,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                         subscriber.setDate(dayOfWeek.toString());
                         subscriberRepository.save(subscriber);
                     }
-                    return;
-
                 }
             }
         }
     }
 
 
-    private void subscribeStage(long chatId, String name) {
+    private void subscribeStage(long chatId) {
         String answer = EmojiParser.parseToUnicode(
                 "Вы успешно подписались на рассылку :heavy_check_mark:");
         sendMessage(answer, chatId);
@@ -511,11 +488,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(answer, chatId);
     }
     private void adminStage(long chatId){
-        String answer = EmojiParser.parseToUnicode(
-                "Вы зашли в админ-панель :curly_loop:");
-        sendMessage(answer, chatId);
-    }
-    private void allSubscribersShow(long chatId){
         String answer = EmojiParser.parseToUnicode(
                 "Вы зашли в админ-панель :curly_loop:");
         sendMessage(answer, chatId);
@@ -538,18 +510,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         rowList.add(keyboardButtonsRow1);
         rowList.add(keyboardButtonsRow2);
         inlineKeyboardMarkup.setKeyboard(rowList);
-        //
         String answer = EmojiParser.parseToUnicode(
                 "Нету такой команды дебилоид :heavy_minus_sign:");
-//
-        SendMessage message = new SendMessage(); // Create a message object object
+        SendMessage message = new SendMessage();
         message.setReplyMarkup(inlineKeyboardMarkup);
         message.setChatId(String.valueOf(chatId));
         message.setText(answer);
-//        message.setReplyMarkup(inlineKeyboardMarkup);
 
         try {
-            execute(message); // Sending our message object to user
+            execute(message);
         } catch (TelegramApiException e) {
             log.error(Arrays.toString(e.getStackTrace()));
         }
@@ -567,7 +536,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<KeyboardRow> rows = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
 
-        // Добавляем кнопки "Подписаться" и "Отписаться" для всех пользователей
+
         KeyboardButton subscribeButton = new KeyboardButton(EmojiParser.parseToUnicode(":heavy_plus_sign: Подписаться"));
         if (subscriber != null) {
             subscribeButton = new KeyboardButton(EmojiParser.parseToUnicode(":heavy_minus_sign: Отписаться"));
@@ -577,17 +546,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         row.add(subscribeButton);
 
         if (admin != null) {
-            // Добавляем 6 кнопок для администратора
+
             KeyboardButton subscribersButton = new KeyboardButton(EmojiParser.parseToUnicode(":wavy_dash: Создать уведомление"));
             subscribersButton.setRequestLocation(false);
             subscribersButton.setRequestContact(false);
             row.add(subscribersButton);
-
-
-//            KeyboardButton promoButton = new KeyboardButton(EmojiParser.parseToUnicode(":moneybag: Рассылка промокодов"));
-//            promoButton.setRequestLocation(false);
-//            promoButton.setRequestContact(false);
-//            row.add(promoButton);
 
             KeyboardButton adminModeButton = new KeyboardButton(EmojiParser.parseToUnicode(":black_nib: Изменить уведомление"));
             adminModeButton.setRequestLocation(false);
@@ -598,18 +561,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             broadcastButton.setRequestLocation(false);
             broadcastButton.setRequestContact(false);
             row.add(broadcastButton);
-
-//            KeyboardButton feedbackButton = new KeyboardButton(EmojiParser.parseToUnicode(":envelope_with_arrow: Отзывы"));
-//            feedbackButton.setRequestLocation(false);
-//            feedbackButton.setRequestContact(false);
-//            row.add(feedbackButton);
-
-            KeyboardButton settingsButton = new KeyboardButton(EmojiParser.parseToUnicode(":gear: Настройки"));
-            settingsButton.setRequestLocation(false);
-            settingsButton.setRequestContact(false);
-            row.add(settingsButton);
         } else {
-            // Добавляем кнопку "Стать администратором" только для не-администраторов
             KeyboardButton adminButton = new KeyboardButton(EmojiParser.parseToUnicode(":exclamation: Админ-панель"));
             adminButton.setRequestContact(false);
             adminButton.setRequestLocation(false);
