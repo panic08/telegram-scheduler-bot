@@ -16,7 +16,7 @@ We can check the java version with a command:
 
 - **java -version**
 
-Next, install the database Postregsql 15 from the off repository.
+Next, install the DBMS Postregsql 15 from the off repository.
 <br/>
 To do this, let's enter commands:
 <br/>
