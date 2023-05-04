@@ -1,4 +1,4 @@
-package io.proj3ct.telegramjokebot.config;
+package ru.panic.lapayment.config;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
